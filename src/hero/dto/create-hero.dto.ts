@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator'
+import { IsNotEmpty, IsString, Length } from 'class-validator'
 
 export class CreateHeroDto {
   @IsNotEmpty()
@@ -7,6 +7,7 @@ export class CreateHeroDto {
 
   @IsString()
   @IsNotEmpty()
+  @Length(10, 200)
   description: string
 
   @IsString()
