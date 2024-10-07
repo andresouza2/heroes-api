@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "src/main.ts",
+      "use": "@vercel/node"
+    }
+  ],
 
   "routes": [
     {
@@ -7,7 +13,8 @@
       "dest": "src/main.ts"
     }
   ],
+
   "buildCommand": "npm run build",
-  "devCommand": "npm run start:prod",
+  "devCommand": "npm run start:dev",
   "installCommand": "npm install"
 }
