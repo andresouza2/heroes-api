@@ -47,7 +47,7 @@ export class SupabaseConfigService {
     const { data, error } = await supabase.storage.from('upload').createSignedUrl(fileName, expiration)
 
     if (error) {
-      throw new Error('Error uploading file: ' + error.message)
+      throw new BadRequestException('Error uploading file: ' + error.message)
     }
 
     return data.signedUrl
@@ -59,7 +59,23 @@ export class SupabaseConfigService {
     const { data, error } = await supabase.storage.from('upload').remove([fileName])
 
     if (error) {
-      throw new Error('Error uploading file: ' + error.message)
+      throw new BadRequestException('Error uploading file: ' + error.message)
+    }
+
+    return data
+  }
+
+  // list all files in bucket
+  async listFiles() {
+    const supabase = await this.init()
+    const { data, error } = await supabase.storage.from('upload').list('', {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'name', order: 'asc' },
+    })
+
+    if (error) {
+      throw new BadRequestException('Error uploading file: ' + error.message)
     }
 
     return data

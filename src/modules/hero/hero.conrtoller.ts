@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFile, UseInterceptors } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common'
 import { CreateHeroDto } from './dto/create-hero.dto'
 import { HeroRepository } from 'src/repositories/hero-repository'
 import { UpdateHeroDto } from './dto/update-hero.dto'
@@ -6,7 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('/heroes')
 export class HeroController {
-  constructor(private heroRepository: HeroRepository) {}
+  constructor(private readonly heroRepository: HeroRepository) {}
 
   @Get()
   async findAll() {
@@ -15,7 +26,11 @@ export class HeroController {
 
   @Get(':id')
   async findById(@Param('id') id: string) {
-    return await this.heroRepository.findById(id)
+    try {
+      return await this.heroRepository.findById(id)
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
   }
 
   @Post()
@@ -23,16 +38,22 @@ export class HeroController {
   async create(@Body() createHero: CreateHeroDto, @UploadedFile() file: Express.Multer.File) {
     const { name, description } = createHero
 
-    const hero = await this.heroRepository.create(
-      {
-        name,
-        description,
-        image: file.originalname,
-      },
-      file,
-    )
+    if (!file) throw new BadRequestException('File is required')
 
-    return hero
+    try {
+      const hero = await this.heroRepository.create(
+        {
+          name,
+          description,
+          image: file.originalname,
+        },
+        file,
+      )
+
+      return hero
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
   }
 
   @Delete(':id')

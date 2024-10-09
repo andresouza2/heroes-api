@@ -3,8 +3,8 @@ import { CreateHeroDto } from 'src/modules/hero/dto/create-hero.dto'
 
 export abstract class HeroRepository {
   abstract create(body: CreateHeroDto, file: Express.Multer.File): Promise<Hero & { imageUrl: string }>
-  abstract findAll(): Promise<Hero[]>
-  abstract findById(id: string): Promise<Hero>
+  abstract findAll(): Promise<(Hero | { imageUrl: string })[]>
+  abstract findById(id: string): Promise<Hero & { imageUrl: string }>
   abstract deleteById(id: string): Promise<void>
   abstract updateById(
     id: string,

@@ -18,11 +18,9 @@ export class PrismaHeroRepository implements HeroRepository {
 
     // subir arquivo para o supabase
     const fileUploaded = await this.supabase.uploadFile(file)
-    console.log({ fileUploaded })
 
     // gerar url da imagem
     const getUrlFile = await this.supabase.createSignedUrl(fileUploaded.path, 60)
-    console.log({ getUrlFile })
 
     // create hero into prisma
     const hero = await this.prisma.hero.create({
@@ -49,11 +47,26 @@ export class PrismaHeroRepository implements HeroRepository {
     }
   }
 
-  async findAll(): Promise<Hero[]> {
+  async findAll(): Promise<(Hero & { imageUrl: string })[]> {
     // buscar todos os herois no prisma
     const heroes = await this.prisma.hero.findMany()
 
-    return heroes
+    const listFile = await this.supabase.listFiles()
+
+    const imageUrlArray = await Promise.all(
+      listFile.map(async (file) => {
+        // retornar nome e url
+        const response = await this.supabase.createSignedUrl(file.name, 60)
+        return { name: file.name, url: response }
+      }),
+    )
+
+    const heroesWithImageUrl = heroes.map((hero) => ({
+      ...hero,
+      imageUrl: imageUrlArray.find((url) => url.name === hero.image)?.url ?? '',
+    }))
+
+    return heroesWithImageUrl
   }
 
   async findById(id: string): Promise<Hero & { imageUrl: string }> {
@@ -68,7 +81,13 @@ export class PrismaHeroRepository implements HeroRepository {
     // get url of the image
     const fileResponse = await this.supabase.createSignedUrl(hero.image, 60)
 
-    return { ...hero, imageUrl: fileResponse ?? '' }
+    return {
+      id: hero.id,
+      name: hero.name,
+      description: hero.description,
+      image: hero.image,
+      imageUrl: fileResponse,
+    }
   }
 
   async deleteById(id: string) {
@@ -79,6 +98,9 @@ export class PrismaHeroRepository implements HeroRepository {
     })
 
     if (!hero) throw new NotFoundException('Hero not found')
+
+    // deletar uma imagem já existente caso exista
+    if (hero.image) await this.supabase.deleteFile(hero.image)
 
     await this.prisma.hero.delete({
       where: {
@@ -112,12 +134,15 @@ export class PrismaHeroRepository implements HeroRepository {
       const fileResult = await this.supabase.uploadFile(file)
 
       // gerar url da imagem
-      getUrlFile = await this.supabase.createSignedUrl(fileResult.path, 60)
+      const urlResult = await this.supabase.createSignedUrl(fileResult.path, 60)
+      getUrlFile = urlResult
+
       getFileName = fileResult.path
     } else {
       getFileName = hero.image
       // gerar url da imagem
-      getUrlFile = await this.supabase.createSignedUrl(getFileName, 60)
+      const urlResult = await this.supabase.createSignedUrl(getFileName, 60)
+      getUrlFile = urlResult
     }
 
     const response = await this.prisma.hero.update({
