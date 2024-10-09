@@ -10,6 +10,5 @@ export class CreateHeroDto {
   @Length(10, 200)
   description: string
 
-  @IsString()
   image?: string
 }
